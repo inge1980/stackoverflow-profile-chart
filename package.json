@@ -1,7 +1,7 @@
 {
-  "name": "stackoverflow-profile-chart",
+  "name": "stackoverflow-tags",
   "version": "0.1.0",
-  "homepage": "https://gitname.github.io/stackoverflow-profile-chart",
+  "homepage": "https://gitname.github.io/stackoverflow-tags",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.5",
