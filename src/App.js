@@ -1,15 +1,15 @@
-import './App.css';
-import PieChart from './components/pieChart';
+import "./App.css";
+import PieChart from "./components/pieChart";
+import ProfileFlair from "./components/profileFlair";
 
 function App() {
-
   return (
     <div className="App">
       <header className="App-header">
         <p>
-        Most used tags in real time from a specific StackOverflow user
+          Distribution of Stackoverflow contributions by a specific user
+          <PieChart />
         </p>
-        <PieChart />
       </header>
     </div>
   );

@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { Chart as ChartJS, Tooltip, ArcElement, plugins } from 'chart.js';
-import  { Pie } from "react-chartjs-2";
+import React, { useState, useEffect } from "react";
+import { Chart as ChartJS, Tooltip, ArcElement, plugins } from "chart.js";
+import { Pie } from "react-chartjs-2";
+import ProfileFlair from "./profileFlair";
 
-ChartJS.register(
-    Tooltip, ArcElement, plugins
-);
+ChartJS.register(Tooltip, ArcElement, plugins);
 
 function PieChart() {
-    const [chartData, setChartData] = useState({datasets: [],});
-    const Chart = async () => {
-        // get tag data from stack overflow user
-        const res = await fetch("https://api.stackexchange.com/2.3/users/1248273/top-tags?site=stackoverflow&filter=!9c6OTSCp6");
-        const data = await res.json();
-        /*
+  const [chartData, setChartData] = useState({ datasets: [] });
+  const Chart = async () => {
+    // get tag data from stack overflow user
+    const res = await fetch(
+      "https://api.stackexchange.com/2.3/users/1248273/top-tags?site=stackoverflow&filter=!9c6OTSCp6"
+    );
+    const data = await res.json();
+    /*
         // test code to avoide getting to the max quota
         let data = {
             "items":
@@ -73,96 +74,103 @@ function PieChart() {
         };
         */
 
-        // rename tags to more readable names, and combine with similar
-        const rename = [
-            { old: 'twitter-bootstrap-3', new: 'Bootstrap'},
-            { old: 'twitter-bootstrap', new: 'Bootstrap'},
-            { old: 'jquery', new: 'jQuery'},
-            { old: 'php', new: 'PHP'},
-            { old: 'javascript', new: 'Javascript'},
-            { old: 'html', new: 'HTML'},
-            { old: 'css', new: 'CSS'}
-        ];
-        data.items = data.items.map(x => {
-            let valueCheck = (e) => (e.old === x.tag_name);
-            let valueExist = rename.some(valueCheck);
-            if (valueExist) {
-                let valueIndex = rename.findIndex(valueCheck);
-            let newTag = (valueExist) ? rename[valueIndex].new : rename[valueIndex].old;  
-            return ({ ...x, tag_name: newTag })
-            } else return x
+    // rename tags to more readable names, and combine with similar
+    const rename = [
+      { old: "twitter-bootstrap-3", new: "Bootstrap" },
+      { old: "twitter-bootstrap", new: "Bootstrap" },
+      { old: "jquery", new: "jQuery" },
+      { old: "php", new: "PHP" },
+      { old: "javascript", new: "Javascript" },
+      { old: "html", new: "HTML" },
+      { old: "css", new: "CSS" },
+    ];
+    data.items = data.items.map((x) => {
+      let valueCheck = (e) => e.old === x.tag_name;
+      let valueExist = rename.some(valueCheck);
+      if (valueExist) {
+        let valueIndex = rename.findIndex(valueCheck);
+        let newTag = valueExist
+          ? rename[valueIndex].new
+          : rename[valueIndex].old;
+        return { ...x, tag_name: newTag };
+      } else return x;
+    });
+
+    // merge similar tags, e.g. twitter-bootstrap and twitter-bootstrap-3
+    data.items = data.items.reduce(function (accumulator, cur) {
+      let tag = cur.tag_name,
+        found = accumulator.find(function (e) {
+          return e.tag_name === tag;
         });
+      if (found) {
+        found.answer_score += cur.answer_score;
+        found.question_score += cur.question_score;
+      } else accumulator.push(cur);
+      return accumulator;
+    }, []);
 
-        // merge similar tags, e.g. twitter-bootstrap and twitter-bootstrap-3
-        data.items = data.items.reduce(function(accumulator, cur) {
-            let tag = cur.tag_name, found = accumulator.find(function(e) {
-                return e.tag_name === tag
-            });
-            if (found) {
-                found.answer_score += cur.answer_score;
-              found.question_score += cur.question_score;
-            }
-            else accumulator.push(cur);
-            return accumulator;
-        }, []);
+    // Lets not show top 100 in a little pie, lets show top 6
+    data.items = data.items.filter((i, index) => index < 6);
 
-        // Lets not show top 100 in a little pie, lets show top 6
-        data.items = data.items.filter((i, index) => (index < 6));
+    // find total score based on good answers and good questions
+    let scores = data.items.map(
+      (tags) => tags.answer_score + tags.question_score
+    );
+    let sum = scores.reduce((a, b) => a + b, 0);
 
-        // find total score based on good answers and good questions
-        let scores = data.items.map((tags) => (tags.answer_score + tags.question_score));
-        let sum = scores.reduce((a, b) => a + b, 0);
-        
-        // reflect percentage instead of raw numbers in tooltip
-        let percentages = scores.map((score) => (Math.round(score/sum*100)));
+    // reflect percentage instead of raw numbers in tooltip
+    let percentages = scores.map((score) => Math.round((score / sum) * 100));
 
-        setChartData({
-            labels: data.items.map((tags) => tags.tag_name),
-            datasets: [
-            {
-                label: "Score",
-                data: scores,
-                backgroundColor: [
-                    "#ffbb11",
-                    "#ecf0f1",
-                    "#50AF95",
-                    'rgb(255, 99, 132)',
-                    'rgb(54, 162, 235)',
-                    'rgb(255, 205, 86)'
-                ],
-                tooltip: percentages.map((v) => v)
-            }
-            ]
-        });
+    setChartData({
+      labels: data.items.map((tags) => tags.tag_name),
+      datasets: [
+        {
+          label: "Score",
+          data: scores,
+          backgroundColor: [
+            "#ffbb11",
+            "#ecf0f1",
+            "#50AF95",
+            "rgb(255, 99, 132)",
+            "rgb(54, 162, 235)",
+            "rgb(255, 205, 86)",
+          ],
+          tooltip: percentages.map((v) => v),
+        },
+      ],
+    });
+  };
 
-    };
+  // update chart with API response
+  useEffect(() => {
+    Chart();
+  }, []);
 
-    // update chart with API response
-    useEffect(() => {Chart();}, []);
-    
-    // beautify the tooltip "LABEL NN%", and align legends to the right
-    const options = { 
-        plugins: {
-            tooltip: {
-                callbacks: { 
-                    label: (Item) => Item.label + ' ' + (Item.formattedValue) + '%' 
-                } 
-            },
-            legend: {
-                display: true,
-                position: 'right'
-            }
-        }
-    };
-   
-    return(
-        <div className="App">
-            <h1>Tag contributions</h1>
-            <div>
-                <Pie data = { chartData } options = { options } />
-            </div>
-        </div>
-    )
-  }
+  // beautify the tooltip "LABEL NN%", and align legends to the right
+  const options = {
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: (Item) => Item.label + " " + Item.formattedValue + "%",
+        },
+      },
+      legend: {
+        display: true,
+        position: "right",
+      },
+    },
+  };
 
-  export default PieChart;
+  // <h1>Tag contributions</h1>
+  let divStyle = { position: "relative" };
+  return (
+    <div className="App">
+      <div style={divStyle}>
+        <Pie data={chartData} options={options} />
+        <ProfileFlair />
+      </div>
+    </div>
+  );
+}
+
+export default PieChart;
