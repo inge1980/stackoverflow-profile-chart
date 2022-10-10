@@ -1,6 +1,5 @@
 import "./App.css";
 import PieChart from "./components/pieChart";
-import ProfileFlair from "./components/profileFlair";
 
 function App() {
   return (
